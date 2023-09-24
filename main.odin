@@ -1,0 +1,78 @@
+package main
+
+import "core:fmt"
+
+Chip8 :: struct {
+    memory: [4096]u8,
+    V: [16]u8,
+    opcode: u16,
+    stack: [16]u16,
+    stack_p: u16,
+    pc: u16,
+    index: u16,
+    graphics: [64*32]u8,
+    key: [16]u8,
+    dt: u8,
+    st: u8,
+}
+
+fontmap_size :: 80
+font: [fontmap_size]u8 = {
+    0xF0, 0x90, 0x90, 0x90, 0xF0,		// 0
+	0x20, 0x60, 0x20, 0x20, 0x70,		// 1
+	0xF0, 0x10, 0xF0, 0x80, 0xF0,		// 2
+	0xF0, 0x10, 0xF0, 0x10, 0xF0,		// 3
+	0x90, 0x90, 0xF0, 0x10, 0x10,		// 4
+	0xF0, 0x80, 0xF0, 0x10, 0xF0,		// 5
+	0xF0, 0x80, 0xF0, 0x90, 0xF0,		// 6
+	0xF0, 0x10, 0x20, 0x40, 0x40,		// 7
+	0xF0, 0x90, 0xF0, 0x90, 0xF0,		// 8
+	0xF0, 0x90, 0xF0, 0x10, 0xF0,		// 9
+	0xF0, 0x90, 0xF0, 0x90, 0x90,		// A
+	0xE0, 0x90, 0xE0, 0x90, 0xE0,		// B
+	0xF0, 0x80, 0x80, 0x80, 0xF0,		// C
+	0xE0, 0x90, 0x90, 0x90, 0xE0,		// D
+	0xF0, 0x80, 0xF0, 0x80, 0xF0,		// E
+	0xF0, 0x80, 0xF0, 0x80, 0x80	    // F
+}
+
+extract_registers :: proc(opcode: u16) -> (u16, u16) {
+    x := (opcode & 0x0F00) >> 8
+    y := (opcode & 0x00F0) >> 4
+    return x, y
+}
+
+decode :: proc(chip8: ^Chip8) {
+    // 0NNN Call -> 0xF000 
+   switch chip8.opcode & 0xF000 {
+    case 0xA000: // Mem sets index to NNN
+    case 0x8001: // OR
+        x, y := extract_registers(chip8.opcode)
+        chip8.V[x] |= chip8.V[y]
+    case 0x8000: // ASSIGN
+   } 
+}
+
+init_chip8 :: proc() -> Chip8 {
+    chip8: Chip8 
+    chip8.pc = 0x200 // 0000 0010 0000 0000
+    chip8.opcode = 0
+    chip8.index = 0
+    chip8.stack_p = 0
+    
+    // Initialize font map 
+    for i: i32 = 0; i < fontmap_size; i += 1 {
+        chip8.memory[i] = font[i]
+    }
+
+    return chip8
+}
+        
+main :: proc() {
+    chip8: Chip8 = init_chip8()
+    opcode: u16 = 0x8fe4 // 10001111
+
+    fmt.println(extract_registers(opcode)) 
+
+   fmt.println("Hello World!") 
+}

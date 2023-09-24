@@ -1,0 +1,12 @@
+{
+    "collections": [
+        {
+            "name": "core",
+            "path": "/home/bet/_PROJECTS/odin_chip8/core"
+        }
+    ],
+    "enable_document_symbols": true,
+    "enable_semantic_tokens": false,
+    "enable_hover": true,
+    "enable_snippets": true
+}
