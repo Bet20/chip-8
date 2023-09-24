@@ -1,5 +1,8 @@
 ./odin_chip8
-odin_chip8
 
 ols.json
 ./ols.json
+
+pong.rom
+./pong.rom
+odin_chip8
