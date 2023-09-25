@@ -2,6 +2,7 @@ package main
 
 import "core:fmt"
 import "core:os"
+import "vendor:sdl2"
 
 Chip8 :: struct {
     memory: [4096]u8,
@@ -15,6 +16,13 @@ Chip8 :: struct {
     key: [16]u8,
     dt: u8,
     st: u8,
+}
+
+Emulation :: struct {
+  renderer: ^sdl2.Renderer,
+  keyboard: []u8,
+  time: f64,
+  dt: f64
 }
 
 program_memory_entry_point :: 0x200
@@ -68,22 +76,22 @@ cycle :: proc(chip8: ^Chip8) {
     case 0x3000:
       x := chip8.opcode & 0x0F00 >> 8
       NN := chip8.opcode & 0x00FF
-      if chip8.memory[x] != NN { chip8.pc += 2 }
+      if chip8.memory[x] != u8(NN) { chip8.pc += 2 }
     case 0x4000:
       x := chip8.opcode & 0x0F00 >> 8
       NN := chip8.opcode & 0x00FF
-      if chip8.memory[x] == NN { chip8.pc += 2 }
+      if chip8.memory[x] == u8(NN) { chip8.pc += 2 }
     case 0x5000:
       x, y := extract_registers(chip8.opcode)
       if x == y { chip8.pc += 2 }
     case 0x6000:
       x := chip8.opcode & 0x0F00 >> 8
       NN := chip8.opcode & 0x00FF
-      chip8.memory[x] = NN
+      chip8.memory[x] = u8(NN)
     case 0x7000:
       x := chip8.opcode & 0x0F00 >> 8
       NN := chip8.opcode & 0x00FF
-      chip8.memory[x] += NN
+      chip8.memory[x] += u8(NN)
     case 0x8000: 
       x, y := extract_registers(chip8.opcode)
       switch chip8.opcode & 0x000F {
@@ -93,7 +101,12 @@ cycle :: proc(chip8: ^Chip8) {
         case 0x0004: chip8.V[x] += chip8.V[y] // ADD math
         case 0x0005: chip8.V[x] -= chip8.V[y] // SUB math
         case 0x0006: chip8.V[x] >>= 1 // Should store the least significant bit 
-    } 
+    }
+    case 0x9000:
+      x, y := extract_registers(chip8.opcode)
+      if chip8.V[x] != chip8.V[y] { chip8.pc += 2 }
+    case 0xB000:
+      chip8.pc = u16(chip8.V[0]) + (chip8.opcode & 0x0FFF)
    } 
 }
 
@@ -122,10 +135,10 @@ main :: proc() {
     // TODO: Check if the file has 
     // been given and print usage
     // if that's not the case 
-    filename: string = os.args[1]
+    // filename: string = os.args[1]
     
     // read rom file as []u8
-    program, ok := os.read_entire_file_from_filename(filename)
+    program, ok := os.read_entire_file_from_filename("pong.rom")
     if !ok { return }
     fmt.println(program)
 
@@ -138,4 +151,8 @@ main :: proc() {
     cycle(&chip8)
 
     fmt.println("Chip-8, odin+sdl2 implementation.")
+
+    // --- SDL2 ---
+    assert(sdl2.Init(sdl2.INIT_VIDEO) == 0, sdl2.GetErrorString())
+    defer sdl2.Quit()
 }
