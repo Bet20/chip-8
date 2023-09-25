@@ -54,21 +54,37 @@ load_opcode :: proc(chip8: ^Chip8) {
     chip8.opcode = u16(chip8.memory[chip8.pc]) << 8 | u16(chip8.memory[chip8.pc + 1])
 }
 
+// emulates a cycle
 cycle :: proc(chip8: ^Chip8) {
-    // 0NNN Call -> 0xF000 
    switch chip8.opcode & 0xF000 {
     case 0xA000: // Mem sets index to NNN
         chip8.index = chip8.opcode & 0x0FFF
         chip8.pc += 2
-    case 0x5000:
-        x, y := extract_registers(chip8.opcode)
-        if x == y { chip8.pc += 2 }
     case 0x1000:
       location := chip8.opcode & 0x0FFF
       chip8.pc = location
     case 0x2000:
-        chip8.stack_p += 1
-    case 0x8000: // ASSIGN
+      chip8.stack_p += 1
+    case 0x3000:
+      x := chip8.opcode & 0x0F00 >> 8
+      NN := chip8.opcode & 0x00FF
+      if chip8.memory[x] != NN { chip8.pc += 2 }
+    case 0x4000:
+      x := chip8.opcode & 0x0F00 >> 8
+      NN := chip8.opcode & 0x00FF
+      if chip8.memory[x] == NN { chip8.pc += 2 }
+    case 0x5000:
+      x, y := extract_registers(chip8.opcode)
+      if x == y { chip8.pc += 2 }
+    case 0x6000:
+      x := chip8.opcode & 0x0F00 >> 8
+      NN := chip8.opcode & 0x00FF
+      chip8.memory[x] = NN
+    case 0x7000:
+      x := chip8.opcode & 0x0F00 >> 8
+      NN := chip8.opcode & 0x00FF
+      chip8.memory[x] += NN
+    case 0x8000: 
       x, y := extract_registers(chip8.opcode)
       switch chip8.opcode & 0x000F {
         case 0x0001: chip8.V[x] |= chip8.V[y] // OP binop
@@ -76,6 +92,7 @@ cycle :: proc(chip8: ^Chip8) {
         case 0x0003: chip8.V[x] ~= chip8.V[y] // XOR binop
         case 0x0004: chip8.V[x] += chip8.V[y] // ADD math
         case 0x0005: chip8.V[x] -= chip8.V[y] // SUB math
+        case 0x0006: chip8.V[x] >>= 1 // Should store the least significant bit 
     } 
    } 
 }
